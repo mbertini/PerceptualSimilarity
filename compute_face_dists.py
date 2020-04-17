@@ -222,6 +222,8 @@ def main():
                 out_file_MSSIM.writelines('%d, %.6f\n' % (frame_count, MSSSIM_dist))
                 ref_face_blocks = get_64x64_face_regions(ref_face_region)
                 mod_face_blocks = get_64x64_face_regions(mod_face_region)
+                LPIPS_dist = 0
+                block_count = 0
                 for ref_face_block, mod_face_block in zip(ref_face_blocks, mod_face_blocks):
                     img0 = util.im2tensor(cv2.cvtColor(ref_face_block, cv2.COLOR_BGR2RGB))  # RGB image from [-1,1]
                     img1 = util.im2tensor(cv2.cvtColor(mod_face_block, cv2.COLOR_BGR2RGB))
@@ -229,8 +231,9 @@ def main():
                         img0 = img0.cuda()
                         img1 = img1.cuda()
                     # Compute distance
-                    LPIPS_dist = model.forward(img0, img1)
-                    out_file_LPIPS.writelines('%d, %.6f\n' % (frame_count, LPIPS_dist))
+                    LPIPS_dist += model.forward(img0, img1)
+                    block_count += 1
+                out_file_LPIPS.writelines('%d, %.6f\n' % (frame_count, LPIPS_dist / block_count))
 
             if DEBUG:
                 processed_image = draw_faces(ref_image.copy(), cnn_faces=fd.cnn_faces, hog_faces=fd.hog_faces,
