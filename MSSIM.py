@@ -2,7 +2,8 @@ import cv2
 import numpy as np
 
 
-def compute_MSSISM(i1, i2):
+# @see https://docs.opencv.org/3.4/d5/dc4/tutorial_video_input_psnr_ssim.html
+def compute_MSSIM(i1, i2):
     C1 = 6.5025
     C2 = 58.5225
     # INITS

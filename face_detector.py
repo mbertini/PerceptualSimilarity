@@ -8,7 +8,7 @@ HAAR_FACE_DETECTOR_MODEL_FILE = './models/face_models/haarcascade_frontalface_al
 
 class FaceDetector:
     def __init__(self, cnn_weights_file=CNN_FACE_DETECTOR_WEIGHTS_FILE, haar_model_file=HAAR_FACE_DETECTOR_MODEL_FILE,
-                 verbose=True):
+                 verbose=False):
         # initialize hog + svm based face detector
         self.hog_face_detector = dlib.get_frontal_face_detector()
 
