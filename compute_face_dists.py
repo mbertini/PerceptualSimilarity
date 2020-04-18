@@ -133,7 +133,8 @@ def main():
     ap.add_argument('-H', '--hog_detector', required=False, action='store_true', help='use HOG detector')
     ap.add_argument('-A', '--haar_detector', required=False, action='store_true', help='use Haar detector')
     ap.add_argument('-C', '--cnn_detector', required=False, action='store_true', help='use CNN-based detector')
-    ap.add_argument('-g', '--gray_SSIM', required=False, action="store_true", help='use gray-level SSIM instead of RGB SSIM')
+    ap.add_argument('-g', '--gray_SSIM', required=False, action="store_true",
+                    help='use gray-level SSIM instead of RGB SSIM')
     ap.add_argument('-v', '--verbose', required=False, help='verbose output', action='store_true')
     args = ap.parse_args()
 
@@ -223,7 +224,8 @@ def main():
             mod_face_regions = get_face_regions(mod_image, resized_faces)
             for ref_face_region, mod_face_region in zip(ref_face_regions, mod_face_regions):
                 if args.gray_SSIM:
-                    MSSIM_dist = compute_MSSIM(cv2.cvtColor(ref_face_region, cv2.COLOR_RGB2GRAY), cv2.cvtColor(mod_face_region, cv2.COLOR_RGB2GRAY))
+                    MSSIM_dist = compute_MSSIM(cv2.cvtColor(ref_face_region, cv2.COLOR_RGB2GRAY),
+                                               cv2.cvtColor(mod_face_region, cv2.COLOR_RGB2GRAY))
                 else:
                     MSSIM_dist = compute_MSSIM(ref_face_region, mod_face_region)
                 BRISQUE_score_ref = brisque_model.compute(ref_face_region)
@@ -231,11 +233,11 @@ def main():
                 print("{}, {:.6f}, {:.6f}".format(frame_count, BRISQUE_score_ref[0], BRISQUE_score_mod[0]),
                       file=out_file_BRISQUE)
                 if args.gray_SSIM:
-                    print('{}, {:.6f}'.format(frame_count, round(MSSIM_dist[0] * 100, 2)))
+                    print('{}, {:.6f}'.format(frame_count, round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
                 else:
                     print('{}, {:.6f}, {:.6f}, {:.6f}'.format(frame_count, round(MSSIM_dist[2] * 100, 2),
-                                                          round(MSSIM_dist[1] * 100, 2),
-                                                          round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
+                                                              round(MSSIM_dist[1] * 100, 2),
+                                                              round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
                 ref_face_blocks = get_64x64_face_regions(ref_face_region)
                 mod_face_blocks = get_64x64_face_regions(mod_face_region)
                 LPIPS_dist = 0
