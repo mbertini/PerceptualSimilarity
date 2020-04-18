@@ -216,14 +216,14 @@ def main():
             ref_face_regions = get_face_regions(ref_image, resized_faces)
             mod_face_regions = get_face_regions(mod_image, resized_faces)
             for ref_face_region, mod_face_region in zip(ref_face_regions, mod_face_regions):
-                MSSSIM_dist = compute_MSSIM(ref_face_region, mod_face_region)
+                MSSIM_dist = compute_MSSIM(ref_face_region, mod_face_region)
                 BRISQUE_score_ref = brisque_model.compute(ref_face_region)
                 BRISQUE_score_mod = brisque_model.compute(mod_face_region)
                 print("{}, {:.6f}, {:.6f}".format(frame_count, BRISQUE_score_ref[0], BRISQUE_score_mod[0]),
                       file=out_file_BRISQUE)
-                print('{}, {:.6f}, {:.6f}, {:.6f}'.format(frame_count, round(MSSSIM_dist[2] * 100, 2),
-                                                          round(MSSSIM_dist[1] * 100, 2),
-                                                          round(MSSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
+                print('{}, {:.6f}, {:.6f}, {:.6f}'.format(frame_count, round(MSSIM_dist[2] * 100, 2),
+                                                          round(MSSIM_dist[1] * 100, 2),
+                                                          round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
                 ref_face_blocks = get_64x64_face_regions(ref_face_region)
                 mod_face_blocks = get_64x64_face_regions(mod_face_region)
                 LPIPS_dist = 0
