@@ -8,7 +8,7 @@ import os
 import models
 from util import util
 
-DEBUG = True
+DEBUG = False#True
 VERBOSE_DEBUG = False
 
 BRISQUE_MODEL_FILE = './models/brisque_models/brisque_model_live.yml'
