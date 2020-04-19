@@ -157,15 +157,19 @@ def main():
         args.haar_detector = True
         print("No face detector selected. Using default OpenCV Haar detector")
 
+    # it is expected that directories contain same number of files that can be sorted so that one is associated with the
+    # file in the corresponding position in the other directory
     dir0_files = []
     for file in os.listdir(args.dir0):
         if fnmatch.fnmatch(file, args.mask0):
             dir0_files.append(file)
+    dir0_files.sort()
     print("Dir 0 (ref videos) contains " + str(len(dir0_files)) + " " + args.mask0 + " files.")
     dir1_files = []
     for file in os.listdir(args.dir1):
         if fnmatch.fnmatch(file, args.mask1):
             dir1_files.append(file)
+    dir1_files.sort()
     print("Dir 1 (mod videos) contains " + str(len(dir1_files)) + " " + args.mask1 + " files.")
 
     # Initializing face detector
