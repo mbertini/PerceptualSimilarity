@@ -133,8 +133,6 @@ def main():
     ap.add_argument('-H', '--hog_detector', required=False, action='store_true', help='use HOG detector')
     ap.add_argument('-A', '--haar_detector', required=False, action='store_true', help='use Haar detector')
     ap.add_argument('-C', '--cnn_detector', required=False, action='store_true', help='use CNN-based detector')
-    ap.add_argument('-g', '--gray_SSIM', required=False, action="store_true",
-                    help='use gray-level SSIM instead of RGB SSIM')
     ap.add_argument('-v', '--verbose', required=False, help='verbose output', action='store_true')
     args = ap.parse_args()
 
@@ -158,8 +156,6 @@ def main():
     if not args.hog_detector and not args.haar_detector and not args.cnn_detector:
         args.haar_detector = True
         print("No face detector selected. Using default OpenCV Haar detector")
-    if args.gray_SSIM:
-        print("Use gray-level SSIM instead of RGB.")
 
     dir0_files = []
     for file in os.listdir(args.dir0):
