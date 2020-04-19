@@ -172,38 +172,61 @@ def main():
             dir1_files.append(file)
     print("Dir 1 (mod videos) contains " + str(len(dir1_files)) + " " + args.mask1 + " files.")
 
-    ## Initializing face detector
+    # Initializing face detector
     fd = FaceDetector()
-    ## Initializing LPIPS perceptual quality model
+    # Initializing LPIPS perceptual quality model
     model = models.PerceptualLoss(model='net-lin', net='alex', use_gpu=args.use_gpu)
     brisque_model = cv2.quality_QualityBRISQUE.create(BRISQUE_MODEL_FILE, BRISQUE_RANGE_FILE)
 
     # process all files
     num_all_files = len(dir0_files)
+    # open files and write headers
+    out_file_LPIPS_all = open(os.path.join(args.out,
+                                           "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
+                                               args.dir1) + "-LPIPS.csv"), 'w')
+    out_file_MSSIM_RGB_all = open(
+        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
+            args.dir1) + "-MSSIM-RGB.csv"),
+        'w')
+    out_file_MSSIM_Y_all = open(
+        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
+            args.dir1) + "-MSSIM-Y.csv"),
+        'w')
+    out_file_BRISQUE_all = open(
+        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
+            args.dir1) + "-BRISQUE.csv"),
+        'w')
+    out_file_BRISQUE_all.writelines('files, BRISQUE score ref,  BRISQUE score mod\n')
+    out_file_MSSIM_RGB_all.writelines('files, SSIM R, SSIM G, SSIM B\n')
+    out_file_MSSIM_Y_all.writelines('files, SSIM Y\n')
+    out_file_LPIPS_all.writelines('files, LPIPS distance\n')
     processed_file = 1
     for reference_video_name, modified_video_name in zip(dir0_files, dir1_files):
         print("Processing ref. video " + str(processed_file) + "/" + str(num_all_files))
         print("Ref. video: " + reference_video_name + " - Mod. video: " + modified_video_name)
         out_file_name_LPIPS = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
                                            os.path.splitext(modified_video_name)[0] + "-LPIPS.csv")
-        out_file_name_MSSIM = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
-                                           os.path.splitext(modified_video_name)[0] + "-MSSIM.csv")
+        out_file_name_MSSIM_RGB = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
+                                               os.path.splitext(modified_video_name)[0] + "-MSSIM-RGB.csv")
+        out_file_name_MSSIM_Y = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
+                                             os.path.splitext(modified_video_name)[0] + "-MSSIM-Y.csv")
         out_file_name_BRISQUE = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
                                              os.path.splitext(modified_video_name)[0] + "-BRISQUE.csv")
         # open files and write headers
         out_file_LPIPS = open(out_file_name_LPIPS, 'w')
-        out_file_MSSIM = open(out_file_name_MSSIM, 'w')
+        out_file_MSSIM_RGB = open(out_file_name_MSSIM_RGB, 'w')
+        out_file_MSSIM_Y = open(out_file_name_MSSIM_Y, 'w')
         out_file_BRISQUE = open(out_file_name_BRISQUE, 'w')
         out_file_BRISQUE.writelines('frame_num, BRISQUE score ref,  BRISQUE score mod\n')
-        if args.gray_SSIM:
-            out_file_MSSIM.writelines('frame_num, SSIM\n')
-        else:
-            out_file_MSSIM.writelines('frame_num, SSIM R, SSIM G, SSIM B\n')
+        out_file_MSSIM_RGB.writelines('frame_num, SSIM R, SSIM G, SSIM B\n')
+        out_file_MSSIM_Y.writelines('frame_num, SSIM Y\n')
         out_file_LPIPS.writelines('frame_num, LPIPS distance\n')
         # open reference and modified videos
         reference_video = cv2.VideoCapture(os.path.join(args.dir0, reference_video_name))
         modified_video = cv2.VideoCapture(os.path.join(args.dir1, modified_video_name))
         frame_count = 0
+        LPIPS_all = MSSIM_R_all = MSSIM_G_all = MSSIM_B_all = MSSIM_Y_all = BRISQUE_ref_all = BRISQUE_mod_all = 0
+        filename_all = os.path.splitext(reference_video_name)[0] + "-" + os.path.splitext(modified_video_name)[0]
         while reference_video.isOpened() and modified_video.isOpened():
             if args.verbose and (frame_count % 100 == 0):
                 print("Frame: {}".format(frame_count))
@@ -223,25 +246,26 @@ def main():
             ref_face_regions = get_face_regions(ref_image, resized_faces)
             mod_face_regions = get_face_regions(mod_image, resized_faces)
             for ref_face_region, mod_face_region in zip(ref_face_regions, mod_face_regions):
-                if args.gray_SSIM:
-                    MSSIM_dist = compute_MSSIM(cv2.cvtColor(ref_face_region, cv2.COLOR_RGB2GRAY),
-                                               cv2.cvtColor(mod_face_region, cv2.COLOR_RGB2GRAY))
-                else:
-                    MSSIM_dist = compute_MSSIM(ref_face_region, mod_face_region)
+                MSSIM_Y_dist = compute_MSSIM(cv2.cvtColor(ref_face_region, cv2.COLOR_RGB2GRAY),
+                                             cv2.cvtColor(mod_face_region, cv2.COLOR_RGB2GRAY))
+                MSSIM_RGB_dist = compute_MSSIM(ref_face_region, mod_face_region)
                 BRISQUE_score_ref = brisque_model.compute(ref_face_region)
                 BRISQUE_score_mod = brisque_model.compute(mod_face_region)
+                MSSIM_Y_all += MSSIM_Y_dist[0]
+                MSSIM_R_all += MSSIM_RGB_dist[2]
+                MSSIM_G_all += MSSIM_RGB_dist[1]
+                MSSIM_B_all += MSSIM_RGB_dist[0]
+                BRISQUE_ref_all += BRISQUE_score_ref[0]
+                BRISQUE_mod_all += BRISQUE_score_mod[0]
                 print("{}, {:.6f}, {:.6f}".format(frame_count, BRISQUE_score_ref[0], BRISQUE_score_mod[0]),
                       file=out_file_BRISQUE)
-                if args.gray_SSIM:
-                    print('{}, {:.6f}'.format(frame_count, round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
-                else:
-                    print('{}, {:.6f}, {:.6f}, {:.6f}'.format(frame_count, round(MSSIM_dist[2] * 100, 2),
-                                                              round(MSSIM_dist[1] * 100, 2),
-                                                              round(MSSIM_dist[0] * 100, 2)), file=out_file_MSSIM)
+                print('{}, {:.6f}'.format(frame_count, round(MSSIM_Y_dist[0] * 100, 2)), file=out_file_MSSIM_Y)
+                print('{}, {:.6f}, {:.6f}, {:.6f}'.format(frame_count, round(MSSIM_RGB_dist[2] * 100, 2),
+                                                          round(MSSIM_RGB_dist[1] * 100, 2),
+                                                          round(MSSIM_RGB_dist[0] * 100, 2)), file=out_file_MSSIM_RGB)
                 ref_face_blocks = get_64x64_face_regions(ref_face_region)
                 mod_face_blocks = get_64x64_face_regions(mod_face_region)
                 LPIPS_dist = 0
-                block_count = 0
                 for ref_face_block, mod_face_block in zip(ref_face_blocks, mod_face_blocks):
                     img0 = util.im2tensor(cv2.cvtColor(ref_face_block, cv2.COLOR_BGR2RGB))  # RGB image from [-1,1]
                     img1 = util.im2tensor(cv2.cvtColor(mod_face_block, cv2.COLOR_BGR2RGB))
@@ -250,8 +274,9 @@ def main():
                         img1 = img1.cuda()
                     # Compute distance
                     LPIPS_dist += model.forward(img0, img1)
-                    block_count += 1
-                out_file_LPIPS.writelines('%d, %.6f\n' % (frame_count, LPIPS_dist / block_count))
+                LPIPS_dist /= len(ref_face_blocks)
+                out_file_LPIPS.writelines('%d, %.6f\n' % (frame_count, LPIPS_dist))
+                LPIPS_all += LPIPS_dist
 
             if DEBUG:
                 processed_image = draw_faces(ref_image.copy(), cnn_faces=fd.cnn_faces, hog_faces=fd.hog_faces,
@@ -283,8 +308,28 @@ def main():
             cv2.destroyAllWindows()
 
         out_file_LPIPS.close()
-        out_file_MSSIM.close()
+        out_file_MSSIM_RGB.close()
+        out_file_MSSIM_Y.close()
         out_file_BRISQUE.close()
+        processed_file += 1
+        MSSIM_Y_all /= frame_count
+        print('{}, {:.6f}'.format(filename_all, round(MSSIM_Y_all * 100, 2)), file=out_file_MSSIM_Y_all)
+        MSSIM_R_all /= frame_count
+        MSSIM_G_all /= frame_count
+        MSSIM_B_all /= frame_count
+        print('{}, {:.6f}, {:.6f}, {:.6f}'.format(filename_all, round(MSSIM_R_all * 100, 2),
+                                                  round(MSSIM_G_all * 100, 2),
+                                                  round(MSSIM_B_all * 100, 2)), file=out_file_MSSIM_RGB_all)
+        BRISQUE_ref_all /= frame_count
+        BRISQUE_mod_all /= frame_count
+        print("{}, {:.6f}, {:.6f}".format(filename_all, BRISQUE_ref_all, BRISQUE_mod_all), file=out_file_BRISQUE_all)
+        LPIPS_all /= frame_count
+        out_file_LPIPS_all.writelines('%s, %.6f\n' % (filename_all, LPIPS_all))
+
+    out_file_LPIPS_all.close()
+    out_file_MSSIM_RGB_all.close()
+    out_file_MSSIM_Y_all.close()
+    out_file_BRISQUE_all.close()
 
 
 if __name__ == '__main__':
