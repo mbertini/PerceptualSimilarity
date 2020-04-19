@@ -125,7 +125,7 @@ def main():
     ap.add_argument('-d1', '--dir1', required=True, type=str, default='./imgs/ex_dir1', help='Other videos directory')
     ap.add_argument('-m1', '--mask1', required=False, type=str, default='*.mkv',
                     help='file mask for files in d1 (e.g. .mp4)')
-    ap.add_argument('-o', '--out', required=True, type=str, default='./results/',
+    ap.add_argument('-o', '--out', required=False, type=str, default='./results/',
                     help='Distance files (.csv) directory')
     ap.add_argument('--use_gpu', action='store_true', help='Flag to use GPU to compute distance')
     ap.add_argument('-w', '--weights', default='./models/face_models/mmod_human_face_detector.dat',
