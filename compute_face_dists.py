@@ -8,7 +8,7 @@ import os
 import models
 from util import util
 
-DEBUG = True
+DEBUG = False
 VERBOSE_DEBUG = False
 
 BRISQUE_MODEL_FILE = './models/brisque_models/brisque_model_live.yml'
@@ -133,6 +133,8 @@ def main():
     ap.add_argument('-H', '--hog_detector', required=False, action='store_true', help='use HOG detector')
     ap.add_argument('-A', '--haar_detector', required=False, action='store_true', help='use Haar detector')
     ap.add_argument('-C', '--cnn_detector', required=False, action='store_true', help='use CNN-based detector')
+    ap.add_argument('-N', '--no_face_detector', required=False, action='store_true',
+                    help='Do NOT perform face detection. Compute quality over whole image')
     ap.add_argument('-v', '--verbose', required=False, help='verbose output', action='store_true')
     args = ap.parse_args()
 
@@ -147,15 +149,20 @@ def main():
         print("Compute LPIPS similarity using GPU (fast)")
     else:
         print("Compute LPIPS similarity using CPU (slow)")
-    if args.hog_detector:
-        print("Find faces using DLib HOG detector")
-    if args.haar_detector:
-        print("Find faces using OpenCV Haar detector")
-    if args.cnn_detector:
-        print("Find faces using DLib CNN detector")
-    if not args.hog_detector and not args.haar_detector and not args.cnn_detector:
-        args.haar_detector = True
-        print("No face detector selected. Using default OpenCV Haar detector")
+    if args.no_face_detector:
+        print("Do NOT perform face detection. Compute frame quality over the whole image.")
+        file_det_name = "-no-face"
+    else:
+        if args.hog_detector:
+            print("Find faces using DLib HOG detector")
+        if args.haar_detector:
+            print("Find faces using OpenCV Haar detector")
+        if args.cnn_detector:
+            print("Find faces using DLib CNN detector")
+        if not args.hog_detector and not args.haar_detector and not args.cnn_detector:
+            args.haar_detector = True
+            print("No face detector selected. Using default OpenCV Haar detector")
+        file_det_name = ""
 
     # it is expected that directories contain same number of files that can be sorted so that one is associated with the
     # file in the corresponding position in the other directory
@@ -183,18 +190,18 @@ def main():
     # open files and write headers
     out_file_LPIPS_all = open(os.path.join(args.out,
                                            "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-                                               args.dir1) + "-LPIPS.csv"), 'w')
+                                               args.dir1) + file_det_name + "-LPIPS.csv"), 'w')
     out_file_MSSIM_RGB_all = open(
         os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + "-MSSIM-RGB.csv"),
+            args.dir1) + file_det_name + "-MSSIM-RGB.csv"),
         'w')
     out_file_MSSIM_Y_all = open(
         os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + "-MSSIM-Y.csv"),
+            args.dir1) + file_det_name + "-MSSIM-Y.csv"),
         'w')
     out_file_BRISQUE_all = open(
         os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + "-BRISQUE.csv"),
+            args.dir1) + file_det_name + "-BRISQUE.csv"),
         'w')
     out_file_BRISQUE_all.writelines('files, BRISQUE score ref,  BRISQUE score mod\n')
     out_file_MSSIM_RGB_all.writelines('files, SSIM R, SSIM G, SSIM B\n')
@@ -205,13 +212,14 @@ def main():
         print("Processing ref. video " + str(processed_file) + "/" + str(num_all_files))
         print("Ref. video: " + reference_video_name + " - Mod. video: " + modified_video_name)
         out_file_name_LPIPS = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
-                                           os.path.splitext(modified_video_name)[0] + "-LPIPS.csv")
+                                           os.path.splitext(modified_video_name)[0] + file_det_name + "-LPIPS.csv")
         out_file_name_MSSIM_RGB = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
-                                               os.path.splitext(modified_video_name)[0] + "-MSSIM-RGB.csv")
+                                               os.path.splitext(modified_video_name)[
+                                                   0] + file_det_name + "-MSSIM-RGB.csv")
         out_file_name_MSSIM_Y = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
-                                             os.path.splitext(modified_video_name)[0] + "-MSSIM-Y.csv")
+                                             os.path.splitext(modified_video_name)[0] + file_det_name + "-MSSIM-Y.csv")
         out_file_name_BRISQUE = os.path.join(args.out, os.path.splitext(reference_video_name)[0] + "-" +
-                                             os.path.splitext(modified_video_name)[0] + "-BRISQUE.csv")
+                                             os.path.splitext(modified_video_name)[0] + file_det_name + "-BRISQUE.csv")
         # open files and write headers
         out_file_LPIPS = open(out_file_name_LPIPS, 'w')
         out_file_MSSIM_RGB = open(out_file_name_MSSIM_RGB, 'w')
@@ -236,15 +244,20 @@ def main():
                 break
             if not mod_ret_val:
                 break
-            fd.process_frame(ref_image, use_cnn=args.cnn_detector, use_hog=args.hog_detector,
-                             use_haar=args.haar_detector)
-            detected_faces = fd.convert_dlib_rectangles_to_opencv_faces(fd.cnn_faces) + \
-                             fd.convert_dlib_rectangles_to_opencv_faces(fd.hog_faces) + \
-                             fd.convert_dlib_rectangles_to_opencv_faces(fd.haar_faces)
-            resized_faces = resize_64x64_multiple_faces_list(detected_faces)
 
-            ref_face_regions = get_face_regions(ref_image, resized_faces)
-            mod_face_regions = get_face_regions(mod_image, resized_faces)
+            if args.no_face_detector:  # compute quality over whole image. No face detection
+                ref_face_regions = ref_image
+                mod_face_regions = mod_image
+            else:  # perform face detection. use face regions to compute quality
+                fd.process_frame(ref_image, use_cnn=args.cnn_detector, use_hog=args.hog_detector,
+                                 use_haar=args.haar_detector)
+                detected_faces = fd.convert_dlib_rectangles_to_opencv_faces(fd.cnn_faces) + \
+                                 fd.convert_dlib_rectangles_to_opencv_faces(fd.hog_faces) + \
+                                 fd.convert_dlib_rectangles_to_opencv_faces(fd.haar_faces)
+                resized_faces = resize_64x64_multiple_faces_list(detected_faces)
+                ref_face_regions = get_face_regions(ref_image, resized_faces)
+                mod_face_regions = get_face_regions(mod_image, resized_faces)
+
             for ref_face_region, mod_face_region in zip(ref_face_regions, mod_face_regions):
                 MSSIM_Y_dist = compute_MSSIM(cv2.cvtColor(ref_face_region, cv2.COLOR_RGB2GRAY),
                                              cv2.cvtColor(mod_face_region, cv2.COLOR_RGB2GRAY))
