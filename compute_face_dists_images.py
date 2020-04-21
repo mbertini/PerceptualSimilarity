@@ -214,8 +214,8 @@ def main():
         filename_all = os.path.splitext(reference_image_name)[0] + "-" + os.path.splitext(modified_image_name)[0]
 
         if args.no_face_detector:  # compute quality over whole image. No face detection
-            ref_face_regions = ref_image
-            mod_face_regions = mod_image
+            ref_face_regions = [ref_image]
+            mod_face_regions = [mod_image]
         else:  # perform face detection. use face regions to compute quality
             fd.process_frame(ref_image, use_cnn=args.cnn_detector, use_hog=args.hog_detector,
                              use_haar=args.haar_detector)
