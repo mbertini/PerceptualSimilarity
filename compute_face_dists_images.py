@@ -7,6 +7,7 @@ import fnmatch
 import os
 import models
 from util import util
+import random
 
 DEBUG = False
 VERBOSE_DEBUG = False
@@ -109,10 +110,26 @@ def compute_64x64_multiple_faces(x, y, w, h):
 
 
 def get_64x64_face_regions(face_region):
-    width = face_region.shape[0]
+    width = face_region.shape[0]  # TODO invert width and height. Keep it for the current experiments...
     height = face_region.shape[1]
     blocks = np.array([face_region[i:i + 64, j:j + 64] for j in range(0, width, 64) for i in range(0, height, 64)])
     return blocks
+
+
+def get_64x64_full_image_regions(full_image):
+    crop_size = 64
+    width = full_image.shape[1]
+    height = full_image.shape[0]
+    all_blocks = np.array(
+        [full_image[i:i + crop_size, j:j + crop_size] for j in range(0, width - (width % crop_size), crop_size) for i in
+         range(0, height - (height % crop_size), crop_size)])
+    max_blocks = 15
+    if max_blocks > len(all_blocks):
+        return all_blocks
+    else:
+        subsampled_indexes = random.sample(range(0, len(all_blocks)), max_blocks)
+        subsampled_blocks = [all_blocks[i] for i in subsampled_indexes]
+        return subsampled_blocks
 
 
 def main():
@@ -239,8 +256,12 @@ def main():
                                                       round(MSSIM_RGB_dist[1] * 100, 2),
                                                       round(MSSIM_RGB_dist[0] * 100, 2)), file=out_file_MSSIM_RGB_all)
 
-            ref_face_blocks = get_64x64_face_regions(ref_face_region)
-            mod_face_blocks = get_64x64_face_regions(mod_face_region)
+            if args.no_face_detector:
+                ref_face_blocks = get_64x64_full_image_regions(ref_face_region)
+                mod_face_blocks = get_64x64_full_image_regions(mod_face_region)
+            else:
+                ref_face_blocks = get_64x64_face_regions(ref_face_region)
+                mod_face_blocks = get_64x64_face_regions(mod_face_region)
             LPIPS_dist = 0
             for ref_face_block, mod_face_block in zip(ref_face_blocks, mod_face_blocks):
                 img0 = util.im2tensor(cv2.cvtColor(ref_face_block, cv2.COLOR_BGR2RGB))  # RGB image from [-1,1]
