@@ -188,18 +188,17 @@ def main():
     # process all files
     num_all_files = len(dir0_files)
     # open files and write headers
+    out_file_base_name = "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
+                        args.dir1) + file_det_name
+    print("Base file name:" + out_file_base_name)
     out_file_LPIPS_all = open(
-        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + file_det_name + "-LPIPS.csv"), 'w')
+        os.path.join(args.out, out_file_base_name + "-LPIPS.csv"), 'w')
     out_file_MSSIM_RGB_all = open(
-        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + file_det_name + "-MSSIM-RGB.csv"), 'w')
+        os.path.join(args.out, out_file_base_name + "-MSSIM-RGB.csv"), 'w')
     out_file_MSSIM_Y_all = open(
-        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + file_det_name + "-MSSIM-Y.csv"), 'w')
+        os.path.join(args.out, out_file_base_name + "-MSSIM-Y.csv"), 'w')
     out_file_BRISQUE_all = open(
-        os.path.join(args.out, "all_files-" + os.path.basename(args.dir0) + "-" + os.path.basename(
-            args.dir1) + file_det_name + "-BRISQUE.csv"), 'w')
+        os.path.join(args.out, out_file_base_name + "-BRISQUE.csv"), 'w')
     out_file_BRISQUE_all.writelines('files, BRISQUE score ref,  BRISQUE score mod\n')
     out_file_MSSIM_RGB_all.writelines('files, SSIM R, SSIM G, SSIM B\n')
     out_file_MSSIM_Y_all.writelines('files, SSIM Y\n')
