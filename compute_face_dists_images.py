@@ -229,7 +229,7 @@ def main():
         ref_image = cv2.imread(os.path.join(args.dir0, reference_image_name))
         mod_image = cv2.imread(os.path.join(args.dir1, modified_image_name))
         if ref_image is None or mod_image is None:
-            print("Skipping images: {} and {}".format(reference_image_name, modified_image_name))
+            # print("Skipping images: {} and {}".format(reference_image_name, modified_image_name))
             continue
         filename_all = os.path.splitext(reference_image_name)[0] + "-" + os.path.splitext(modified_image_name)[0]
 
